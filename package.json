@@ -1,6 +1,6 @@
 {
-  "name": "react-native-snapchat-kit",
-  "title": "React Native Snapchat Kit",
+  "name": "bread-react-snap-kit",
+  "title": "Bread React Native Snapchat Kit",
   "version": "1.2.0",
   "description": "Bridge to use Snapchat Frameworks in react native",
   "main": "index",
