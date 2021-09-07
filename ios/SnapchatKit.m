@@ -19,6 +19,9 @@
     return self;
 }
 
++ (BOOL)requiresMainQueueSetup {  
+    return YES;
+}
 
 RCT_EXPORT_MODULE()
 
@@ -46,6 +49,32 @@ RCT_REMAP_METHOD(login,
     }];
 }
 
+//[snapAPI startSendingContent:snap completionHandler:^(NSError *error) {
+RCT_EXPORT_METHOD(verifyAndLogin:(NSString *)phone
+                  region:(NSString *)region
+//                  completion:(NSDictionary *)completion
+                  resolver:(RCTPromiseResolveBlock)resolve 
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+    NSLog(@"phone=====> : %@", phone);
+     UIViewController *rootViewController = [UIApplication sharedApplication].delegate.window.rootViewController;
+
+     [SCSDKVerifyClient verifyAndLoginFromViewController:rootViewController phone:phone region:region completion:^(BOOL success, NSString * _Nullable __strong phoneId, NSString * _Nullable __strong verifyId, NSError * _Nullable __strong error) {
+         if (success) {
+             resolve(@{
+                 @"success": @(success),
+ //                @"phoneId": @(phoneId),
+ //                @"verifyId": @(verifyId)
+             });
+         } else {
+             resolve(@{
+                 @"result": @(NO),
+                 @"error": error.localizedDescription
+         });
+         }
+     }];
+}
+
+
 RCT_EXPORT_METHOD(logout) {
     [SCSDKLoginClient clearToken];
 }
@@ -54,7 +83,6 @@ RCT_REMAP_METHOD(isUserLoggedIn,
                  isUserLoggedInResolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
-
     resolve(@{@"result": @([SCSDKLoginClient isUserLoggedIn])});
 }
 
@@ -81,9 +109,8 @@ RCT_REMAP_METHOD(fetchUserData,
                 @"externalId": me[@"externalId"],
                 @"avatar": bitmojiAvatarUrl
             });
-
         }
-                                         failure:^(NSError * error, BOOL isUserLoggedOut)
+            failure:^(NSError * error, BOOL isUserLoggedOut)
         {
             reject(@"error", @"error", error);
         }];
@@ -119,11 +146,13 @@ RCT_EXPORT_METHOD(sharePhotoResolved:(NSDictionary *)resolvedPhoto url:(NSString
                   stickerPosX:(float)stickerPosX stickerPosY:(float)stickerPosY
                   attachmentUrl:(NSString *)attachmentUrl
                   caption:(NSString *)caption
+                  topics:(NSArray *)topics
+                  isPostToSpotlightPermitted:(BOOL *)isPostToSpotlightPermitted
                   resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
 
     NSObject *photo = resolvedPhoto != NULL ? resolvedPhoto : photoUrl;
     NSObject *sticker = stickerResolved != NULL ? stickerResolved : stickerUrl;
-    [self shareWithPhoto:photo videoUrl:NULL sticker:sticker stickerPosX:stickerPosX stickerPosY:stickerPosY attachmentUrl:attachmentUrl caption:caption resolver:resolve rejecter:reject];
+    [self shareWithPhoto:photo videoUrl:NULL sticker:sticker stickerPosX:stickerPosX stickerPosY:stickerPosY attachmentUrl:attachmentUrl caption:caption topics:topics isPostToSpotlightPermitted:isPostToSpotlightPermitted resolver:resolve rejecter:reject];
 
 }
 
@@ -133,14 +162,15 @@ RCT_EXPORT_METHOD(shareVideoAtUrl:(NSString *)videoUrl
                   stickerPosX:(float)stickerPosX stickerPosY:(float)stickerPosY
                   attachmentUrl:(NSString *)attachmentUrl
                   caption:(NSString *)caption
+                  topics:(NSArray *)topics
+                  isPostToSpotlightPermitted:(BOOL *)isPostToSpotlightPermitted
                   resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
 
     NSObject *sticker = stickerResolved != NULL ? stickerResolved : stickerUrl;
-    [self shareWithPhoto:NULL videoUrl:videoUrl sticker:sticker stickerPosX:stickerPosX stickerPosY:stickerPosY attachmentUrl:attachmentUrl caption:caption resolver:resolve rejecter:reject];
-
+    [self shareWithPhoto:NULL videoUrl:videoUrl sticker:sticker stickerPosX:stickerPosX stickerPosY:stickerPosY attachmentUrl:attachmentUrl caption:caption topics:topics isPostToSpotlightPermitted:isPostToSpotlightPermitted resolver:resolve rejecter:reject];
 }
 
-- (void) shareWithPhoto:(NSObject *)photoImageOrUrl videoUrl:(NSString *)videoUrl sticker:(NSObject *)stickerImageOrUrl stickerPosX:(float)stickerPosX stickerPosY:(float)stickerPosY attachmentUrl:(NSString *)attachmentUrl caption:(NSString *)caption resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+- (void) shareWithPhoto:(NSObject *)photoImageOrUrl videoUrl:(NSString *)videoUrl sticker:(NSObject *)stickerImageOrUrl stickerPosX:(float)stickerPosX stickerPosY:(float)stickerPosY attachmentUrl:(NSString *)attachmentUrl caption:(NSString *)caption topics:(NSArray *)topics isPostToSpotlightPermitted:(BOOL *)isPostToSpotlightPermitted resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
 
     NSObject<SCSDKSnapContent> *snap;
 
@@ -185,6 +215,8 @@ RCT_EXPORT_METHOD(shareVideoAtUrl:(NSString *)videoUrl
 
      snap.caption = caption;
      snap.attachmentUrl = attachmentUrl;
+     snap.topics = topics;
+     snap.isPostToSpotlightPermitted = isPostToSpotlightPermitted;
      NSLog(@"snap api : %@", snapAPI);
      [snapAPI startSendingContent:snap completionHandler:^(NSError *error) {
          if (error != nil) {
@@ -255,4 +287,6 @@ RCT_EXPORT_METHOD(shareVideoAtUrl:(NSString *)videoUrl
      }];
 }
 
- @end
+@end
+            
+                   

@@ -20,6 +20,23 @@ export default class SnapchatKit {
     });
   }
 
+  static async verifyAndLogin(phone, region, completion) {
+    // TODO: Include completion if needed
+    return new Promise((resolve, reject) => {
+      RNSnapchatKit.verifyAndLogin(phone, region)
+        .then((result) => {
+          if(result.error) {
+            reject(result.error);
+          } else { 
+            this.getUserInfo()
+              .then(resolve)
+              .catch(reject);
+          }
+        })
+        .catch(e => reject(e)); 
+    });
+  }
+
   static async isLogged() {
     const { result } = await RNSnapchatKit.isUserLoggedIn();
     return result;
@@ -58,7 +75,10 @@ export default class SnapchatKit {
 		resolvedSticker, resolvedSticker == null ? stickerImageSourceOrUrl : null, 
 		stickerPosX, stickerPosY, 
 		attachmentUrl, 
-		caption).catch(e => { reject(e) });
+		caption,
+    topics,
+    isPostToSpotlightPermitted)
+    .catch(e => { reject(e) });
 
     return result;
   }
@@ -74,10 +94,14 @@ export default class SnapchatKit {
 		resolvedSticker, resolvedSticker == null ? stickerImageSourceOrUrl : null, 
 		stickerPosX, stickerPosY, 
 		attachmentUrl, 
-		caption).catch(e => { reject(e) });
+		caption,
+    topics,
+    isPostToSpotlightPermitted)
+    .catch(e => { reject(e) });
 
     return result;
   }
+
   static async lensSnapContent(lensUUID, caption, attachmentUrl, launchData) {
     
     return new Promise((resolve, reject) => {
